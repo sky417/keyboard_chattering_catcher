@@ -14,7 +14,7 @@
 using namespace std;
 
 unordered_map<char, int> m;
-int globalThreshold = 75;
+int globalThreshold = 50;
 char lastKey = 0x0;
 unsigned __int64 lastTs = 0;
 
@@ -48,11 +48,10 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 }
 
                 if ((now - lastTs) < threshold) {
-                    printf("%llu :: CHATTERING detected curkey 0x%02x, lastkey %d, delta %d\n",
-                           now, p->vkCode, lastKey, (now - lastTs));
+                    printf("%llu :: CHATTERING detected curkey 0x%02x, delta %d\n",
+                           now, p->vkCode, (now - lastTs));
                     return 1;
                 }
-                //return 1;
             }
             break;
         case WM_KEYUP:
