@@ -5,3 +5,5 @@
 - how to intercept keypress
 - per-key config
 - gui
+- disable per-app
+
