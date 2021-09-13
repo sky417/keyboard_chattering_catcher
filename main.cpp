@@ -10,6 +10,7 @@
 #include <chrono>
 #include <windows.h>
 #include <stdio.h>
+#include "keyString.h"
 
 using namespace std;
 
@@ -26,6 +27,13 @@ bool has_key(unordered_map<char, int> m, char key) {
     return true;
 }
 
+bool has_key(unordered_map<int, string> m, char key) {
+    if (m.find(key) == m.end()) {
+        return false;
+    }
+
+    return true;
+}
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
     if (nCode == HC_ACTION)
@@ -48,8 +56,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
                 }
 
                 if ((now - lastTs) < threshold) {
-                    printf("%llu :: CHATTERING detected curkey 0x%02x, delta %d\n",
-                           now, p->vkCode, (now - lastTs));
+                    cout << now << ":: CHATTERING << " <<  keyStrMap[p->vkCode] << " >>, delta "  << (now - lastTs) << endl;
                     return 1;
                 }
             }
