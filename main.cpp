@@ -6,30 +6,59 @@
 
 #include <iostream>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <chrono>
 #include <windows.h>
 #include <stdio.h>
 
 using namespace std;
 
-map<char, int> m;
+unordered_map<char, int> m;
+int globalThreshold = 75;
+char lastKey = 0x0;
+unsigned __int64 lastTs = 0;
+
+bool has_key(unordered_map<char, int> m, char key) {
+    if (m.find(key) == m.end()) {
+        return false;
+    }
+
+    return true;
+}
 
 LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
     if (nCode == HC_ACTION)
     {
+        unsigned __int64 now = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
+        PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
+
         switch (wParam)
         {
         case WM_KEYDOWN:
-        case WM_KEYUP:
-            PKBDLLHOOKSTRUCT p = (PKBDLLHOOKSTRUCT)lParam;
-            //cout << "Event " << getActionStr(wParam) << ", Hello " << p->vkCode << endl;
-            unsigned __int64 now = chrono::duration_cast<chrono::milliseconds>(chrono::system_clock::now().time_since_epoch()).count();
-            printf("%llu ::: Event 0x%04x, key 0x%x\n", now, wParam, p->vkCode);
-            if (p->vkCode == 0x51)  {
-                return 1;
+            // if it is the same key
+            // and the delta is less than threshold
+            // ignore that keydown event
+            unsigned int threshold;
+            if (p->vkCode == lastKey) {
+                if (has_key(m, lastKey)) {
+                    threshold = m[lastKey];
+                } else {
+                    threshold = globalThreshold;
+                }
+
+                if ((now - lastTs) < threshold) {
+                    printf("%llu :: CHATTERING detected curkey 0x%02x, lastkey %d, delta %d\n",
+                           now, p->vkCode, lastKey, (now - lastTs));
+                    return 1;
+                }
+                //return 1;
             }
+            break;
+        case WM_KEYUP:
+            // keyup doesn't do much, we just need to record the timestamp and the key code
+            lastTs = now;
+            lastKey = p->vkCode;
             break;
         }
     }
@@ -39,6 +68,7 @@ LRESULT CALLBACK LowLevelKeyboardProc(int nCode, WPARAM wParam, LPARAM lParam) {
 
 int main(void) {
     m[' '] = 100;
+    m[0x8] = 30;
 
     cout << "Hello world" << endl;
 
